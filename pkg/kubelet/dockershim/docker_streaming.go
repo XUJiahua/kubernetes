@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"k8s.io/klog"
 	"math"
 	"time"
 
@@ -76,6 +77,11 @@ func (r *streamingRuntime) PortForward(podSandboxID string, port int32, stream i
 // ExecSync executes a command in the container, and returns the stdout output.
 // If command exits with a non-zero exit code, an error is returned.
 func (ds *dockerService) ExecSync(_ context.Context, req *runtimeapi.ExecSyncRequest) (*runtimeapi.ExecSyncResponse, error) {
+	klog.Warningf("grpc start: req %v\n", req)
+	defer func() {
+		klog.Warningf("grpc end: req %v\n", req)
+	}()
+
 	timeout := time.Duration(req.Timeout) * time.Second
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 	err := ds.streamingRuntime.exec(req.ContainerId, req.Cmd,

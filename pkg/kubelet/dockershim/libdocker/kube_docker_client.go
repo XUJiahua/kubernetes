@@ -457,6 +457,10 @@ func (d *kubeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*
 }
 
 func (d *kubeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions) error {
+	klog.Warningf("goroutine start: startExec %s, opts %v\n", startExec, opts)
+	defer func() {
+		klog.Warningf("goroutine end: startExec %s, opts %v\n", startExec, opts)
+	}()
 	ctx, cancel := d.getCancelableContext()
 	defer cancel()
 	if opts.Detach {
