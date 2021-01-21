@@ -456,13 +456,20 @@ func (d *kubeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*
 	return &resp, nil
 }
 
-func (d *kubeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions) error {
-	klog.Warningf("goroutine start: startExec %s, opts %v\n", startExec, opts)
+func (d *kubeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions, timeout time.Duration) error {
+	klog.Warningf("goroutine start: startExec %s, opts %v, timeout %v\n", startExec, opts, timeout)
 	defer func() {
-		klog.Warningf("goroutine end: startExec %s, opts %v\n", startExec, opts)
+		klog.Warningf("goroutine end: startExec %s, opts %v, timeout %v\n", startExec, opts, timeout)
 	}()
-	ctx, cancel := d.getCancelableContext()
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+	} else {
+		ctx, cancel = d.getCancelableContext()
+	}
 	defer cancel()
+
 	if opts.Detach {
 		err := d.client.ContainerExecStart(ctx, startExec, opts)
 		if ctxErr := contextError(ctx); ctxErr != nil {
@@ -490,7 +497,17 @@ func (d *kubeDockerClient) StartExec(startExec string, opts dockertypes.ExecStar
 		sopts.ExecStarted <- struct{}{}
 	}
 
-	return d.holdHijackedConnection(sopts.RawTerminal || opts.Tty, sopts.InputStream, sopts.OutputStream, sopts.ErrorStream, resp)
+	holdErr := make(chan error, 1)
+	go func() {
+		holdErr <- d.holdHijackedConnection(sopts.RawTerminal || opts.Tty, sopts.InputStream, sopts.OutputStream, sopts.ErrorStream, resp)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-holdErr:
+		return err
+	}
 }
 
 func (d *kubeDockerClient) InspectExec(id string) (*dockertypes.ContainerExecInspect, error) {

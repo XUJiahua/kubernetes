@@ -663,7 +663,7 @@ func (f *FakeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*
 	return &dockertypes.IDResponse{ID: "12345678"}, nil
 }
 
-func (f *FakeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions) error {
+func (f *FakeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions, timeout time.Duration) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "start_exec"})
