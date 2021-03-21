@@ -1,0 +1,3 @@
+# Workqueue Example
+
+use sharedInformerFactory.
