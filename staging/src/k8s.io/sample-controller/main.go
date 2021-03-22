@@ -18,8 +18,6 @@ package main
 
 import (
 	"flag"
-	"time"
-
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -59,8 +57,8 @@ func main() {
 		klog.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
-	exampleInformerFactory := informers.NewSharedInformerFactory(exampleClient, time.Second*30)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, 0)
+	exampleInformerFactory := informers.NewSharedInformerFactory(exampleClient, 0)
 
 	controller := NewController(kubeClient, exampleClient,
 		kubeInformerFactory.Apps().V1().Deployments(),

@@ -380,6 +380,8 @@ func (c *Controller) handleObject(obj interface{}) {
 			return
 		}
 
+		// detect children objects changes,
+		// let foo handle it's children objects
 		c.enqueueFoo(foo)
 		return
 	}
@@ -397,6 +399,7 @@ func newDeployment(foo *samplev1alpha1.Foo) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      foo.Spec.DeploymentName,
 			Namespace: foo.Namespace,
+			// ownership
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(foo, samplev1alpha1.SchemeGroupVersion.WithKind("Foo")),
 			},
